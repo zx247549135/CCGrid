@@ -6,11 +6,11 @@ The sampler works seasonally to collect and compute all metrics in the scheduler
 
 \begin{enumerate}
 
-\item Read phase. Only shuffle buffer in shuffle read phase can result in memory pressure in this phase, thus the sampler updates metrics in shuffle reader. The updated metrics include the number of processed records, the number of total records, the size of total records and the size of shuffle buffer.
+\item Read phase. Only shuffle buffer in shuffle read phase result in memory pressure in this phase, thus the sampler updates metrics in shuffle reader. The updated metrics include the number of processed records, the number of total records, the size of total records and the size of shuffle buffer.
 
-\item Process phase. Only caching data can produce memory pressure during processing phase, thus the sampler updates metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by function APIs to unroll intermediate data in memory. The updated metric is the size of caching data objects unrolled by this task.
+\item Process phase. Only caching data produce memory pressure during processing phase, thus the sampler updates metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by function APIs to unroll intermediate data in memory. The updated metric is the size of caching data objects unrolled by this task.
 
-\item Write phase. Only shuffle write can produce memory pressure through the shuffle buffer, thus the sampler updates metrics in shuffle writer. The updated metric is the size of shuffle buffer, the number of write records, and the number of total records. 
+\item Write phase. Only shuffle write produce memory pressure through the shuffle buffer, thus the sampler updates metrics in shuffle writer. The updated metric is the size of shuffle buffer, the number of write records, and the number of total records. 
 
 \end{enumerate}
 
@@ -26,4 +26,4 @@ The scheduler detects the total memory usage from the sampler seasonally. When i
 
 %The scheduler detects the total memory usage in JVM seasonally. When it reaches the yellow value in Algorithm~\ref{code:scheduler}, it proposes the stopping tasks. The proposal will be used to update the flag of each task in task scheduler. Both \textit{ShuffleMapTask} and \textit{ResultTask} process data in \textit{InterruptibleIterator}. We put the flag in this iterator. The flag is updated by the task scheduler each time the scheduler gives new proposals. When the flag is true, the \textit{InterruptibleIterator} will stop itself and the task also stops working.
 
-When we consider the Spark as a server, we choose Spark Job Server 0.6.2~\cite{www:jobserver}. Each job in Spark works within the only {\ttfamily \small SparkContext}. Spark Job Server can first define the shared context. We set the scheduler mode as FAIR and build a scheduler pool in the context. The scheduler mode means the processing sequences when jobs come from multi-tenant. Fair scheduler will process tasks from each job fairly. All jobs are submitted to Spark Job Server instead of Spark. Spark Job Server will resubmit the job to the shared context in Spark. Thus, all jobs are processed in one context in Spark.
+When we consider the Spark as a server, we choose Spark Job Server 0.6.2~\cite{www:jobserver}. Each job in Spark works within the only {\ttfamily \small SparkContext}. Spark Job Server first defines the shared context. We set the scheduler mode as FAIR and build a scheduler pool in the context. The scheduler mode means the processing sequences when jobs come from multi-tenant. Fair scheduler will process tasks from each job fairly. All jobs are submitted to Spark Job Server instead of Spark. Spark Job Server will resubmit the job to the shared context in Spark. Thus, all jobs are processed in one context in Spark.

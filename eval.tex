@@ -2,6 +2,99 @@
 
 \subsection{Configuration}
 
+We use four nodes as workers and one node as the master in the experiments. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mount on one SAS disk, running RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We count not only the execution time of each application, but also the details of all tasks.
+
+\begin{table}[!t]
+\small
+\centering
+\caption{Function APIs in each Application}
+\begin{tabular}{ c | c | c | c }
+
+\hline
+\textbf{App} & \textbf{Stages} & \textbf{Function API(s)} & \textbf{Cache} \\
+\hline
+Grep & 1 & \textit{filter} & No \\
+\hline
+WC & 2 & \textit{reduceByKey} & No \\
+\hline
+Sort & 3 & \textit{distinct} \& \textit{sortByKey} & No \\
+\hline
+PR & N & \textit{groupByKey} \& \textit{reduceByKey} & Yes \\
+\hline
+
+\hline
+\end{tabular}
+%\vspace{1mm} 
+%\vspace{-8mm}
+\label{table:app}
+\end{table} 
+
+We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC), and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file.  Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, and one of its most important features is that it will cache data in memory. We choose these four benchmarks because these applications contains all three models, as shown in Table~\ref{table:app}. For Grep, Sort, and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers, both with the size of 50GB. And for PR, we use the real graphs: webbase-2001 (30GB)~\cite{boldi:webgraph} to evaluate the performance of MURS. Key-value pairs of each record in all input dataset have the similar size, thus we can simply analyze the memory usage model by function API. These applications are grouped to evaluate different scenes and submitted to Spark Job Server together.
+
+\subsection{Memory pressure without caching}
+
+Most current data processing systems are designed based on MapReduce, but only parts of them provide the in-memory computing model that caches data in memory to speed up the system. Thus, we first evaluate these applications without caching data in memory to stand for common frameworks working with key-value pairs, such as Hadoop and Hive.
+
+\subsection{Memory pressure with caching}
+
+Some frameworks provide caching mechanism for in-memory computation, such as Spark and Flink. Although the in-memory caching data speed up the execution of a job, some works~\cite{bu:bloat, nguyen2015facade} show that it results in greater memory pressure because the caching data live along with the job. Tracing these data is expensive and there is less accessible memory space for execution.
+
+We choose PR and WC as the submitted applications. PR is an iterative application and we run 5 iterations in our experiments. PR caches intermediate data in memory after the first iteration. WC is submitted at the second iteration. We first adjust the heap size to show the performance of MURS, while the input dataset is 30GB, as shown in Figure. Execution of each application is shown in Figure.
+
+\subsection{Avoidance of spill}
+
+MURS sets the red value to avoid spill when memory pressure is heavy in these systems who provide spill. We take the evaluation in the last section, which runs PR and WC in the Spark for service, to measure the spill tasks. MURS estimates the size of required memory space for each task, and ensures that running tasks can complete with the remaining memory space. As the estimation is inaccurate to some extent, we find that fewer tasks will still spill in MURS, as shown in Table~\ref{table:spill}. There are no spill tasks in WC in MURS and the spill tasks in PR decreased from 32\% to 2.5\% in comparing to Spark.
+
+\begin{table}[!t]
+\small
+\centering
+\caption{Spill Tasks in MURS and Spark}
+\begin{tabular}{ c | c | c | c | c | c | c | c }
+
+\hline
+\multirow{2}{*}{} & \multirow{2}{*}{\textbf{App}} & \multicolumn{3}{| c |}{\textbf{Spill Percentage}} & \multicolumn{3}{| c |}{\textbf{Spill Size (MB)}} \\
+\cline{3-8}
+ & & total & spill & percent & min & mid & max \\
+\hline
+\multirow{2}{*}{Spark} & WC & 1000 & 91 & 9\% & 0 & 0 & 710 \\
+\cline{2-8}
+ & PR & 1500 & 480 & 32\% & 310 & 367 & 439 \\
+\hline
+\multirow{2}{*}{MURS} & WC & 1000 & 0 & 0\% & - & - & -  \\
+\cline{2-8}
+ & PR & 1500 & 37 & 2.5\% & 0 & 0 & 458 \\
+\hline
+
+\hline
+\end{tabular}
+%\vspace{-2mm}
+ 
+%\vspace{-6mm}
+\label{table:spill}
+\end{table}
+
+We should acknowledge that error exists in the avoidance of spill. The sampler in MURS counts two important metrics of one task: the percentage of processed records in total records, and the current allocated memory space for this task. We can quickly get the required memory space based on these two metrics. When memory pressure reaches the red value, we suspend parts of tasks and leave enough remaining memory space for running tasks. As the estimate is based on sampling, error exists in the estimated size of allocated memory space, especially when the value in some key-value pairs is a collection. Different records have different sizes because the number of values inside a collection is different, such as \textit{groupByKey} in PR. Some hot keys may result in substantial error. Thus, it can be accepted that there are even fewer spill tasks in MURS.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\begin{comment}
+
+\subsection{Configuration}
+
 We use four nodes as workers and one node as the master in the experiments. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mount on one SAS disk, running RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We count not only the execution time of each application, but also the details of all tasks. Some important configurations are set to be the same in both MURS and Spark, as shown in Table~\ref{table:config}. The memory of each executor is set to be 15GB.
 
 \begin{table}[!t]
@@ -190,7 +283,7 @@ Light memory pressure usually means that memory space will suffer less allocatio
 
 
 
-\begin{comment}
+%%%%\begin{comment}
 
 \subsection{Batch Processing}
 
