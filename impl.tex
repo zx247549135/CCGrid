@@ -6,11 +6,11 @@ The sampler works seasonally to collect and compute all metrics in the scheduler
 
 \begin{enumerate}
 
-\item Read phase. Only shuffle buffer in shuffle read phase result in memory pressure in this phase, thus the sampler updates metrics in shuffle reader. The updated metrics include the number of processed records, the number of total records, the size of total records and the size of shuffle buffer.
+\item Read phase. Only shuffle buffer in shuffle read phase results in memory pressure in this phase, thus the sampler updates metrics in shuffle reader. The updated metrics include the number of processed records, the number of total records, the size of total records and the size of shuffle buffer.
 
 \item Process phase. Only caching data produce memory pressure during processing phase, thus the sampler updates metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by function APIs to unroll intermediate data in memory. The updated metric is the size of caching data objects unrolled by this task.
 
-\item Write phase. Only shuffle write produce memory pressure through the shuffle buffer, thus the sampler updates metrics in shuffle writer. The updated metric is the size of shuffle buffer, the number of write records, and the number of total records. 
+\item Write phase. Only shuffle buffer in write phase produces memory pressure, thus the sampler updates metrics in shuffle writer. The updated metrics are the size of shuffle buffer, the number of write records, and the number of total records. 
 
 \end{enumerate}
 

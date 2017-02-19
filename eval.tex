@@ -2,7 +2,7 @@
 
 \subsection{Configuration}
 
-We use four nodes as workers and one node as the master in the experiments. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mount on one SAS disk, running RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We count not only the execution time of each application, but also the details of all tasks.
+We use four nodes as workers and one node as the master in the experiments. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mount on one SAS disk, running RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We count not only the execution time of each application, but also the details of runtime situations.
 
 \begin{table}[!t]
 \small
@@ -15,11 +15,11 @@ We use four nodes as workers and one node as the master in the experiments. Each
 \hline
 Grep & 1 & \textit{filter} & No \\
 \hline
-WC & 2 & \textit{reduceByKey} & No \\
+WC & 2 & \textit{flatMap} \& \textit{reduceByKey} & No \\
 \hline
 Sort & 3 & \textit{distinct} \& \textit{sortByKey} & No \\
 \hline
-PR & N & \textit{groupByKey} \& \textit{reduceByKey} & Yes \\
+PR & N & \textit{groupByKey} \& \textit{map} \& \textit{reduceByKey} & Yes \\
 \hline
 
 \hline
@@ -29,17 +29,92 @@ PR & N & \textit{groupByKey} \& \textit{reduceByKey} & Yes \\
 \label{table:app}
 \end{table} 
 
-We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC), and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file.  Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, and one of its most important features is that it will cache data in memory. We choose these four benchmarks because these applications contains all three models, as shown in Table~\ref{table:app}. For Grep, Sort, and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers, both with the size of 50GB. And for PR, we use the real graphs: webbase-2001 (30GB)~\cite{boldi:webgraph} to evaluate the performance of MURS. Key-value pairs of each record in all input dataset have the similar size, thus we can simply analyze the memory usage model by function API. These applications are grouped to evaluate different scenes and submitted to Spark Job Server together.
+We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC), and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, and one of its most important features is that it will cache data in memory. We choose these four benchmarks because these applications contains different function APIs, as shown in Table~\ref{table:app}. For Sort  and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The size of input dataset is 30GB in Sort, and 50GB in WC. For Grep and PR, we use the real graphs: webbase-2001 (30GB)~\cite{boldi:webgraph} to evaluate the performance of MURS. Key-value pairs of each record in all input dataset have the similar size. We tun the size of heap size to evaluate different memory pressure. Garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to Spark Job Server together.
 
 \subsection{Memory pressure without caching}
 
 Most current data processing systems are designed based on MapReduce, but only parts of them provide the in-memory computing model that caches data in memory to speed up the system. Thus, we first evaluate these applications without caching data in memory to stand for common frameworks working with key-value pairs, such as Hadoop and Hive.
 
+We choose three applications: Sort, WC, and Grep. These applications have no caching operation. Each application has similar implementation in MapReduce. Grep reads data from disk and filter these records which satisfy the given conditions. Most data objects are temporary. Shuffle buffers in Sort and WC are data objects with long lifetime. Thus tasks in Sort and WC are clear to heavy tasks in MURS. The results of each submission are shown in Figure~\ref{fig:pressurewithoutcache}. The best improvement of MURS can be 1.8x to 2.9x compared to Spark in each evaluation. The reduction of garbage collection contributes to most improvement.
+
+\begin{figure*}[!t]
+\centering
+\subfigure[Sort+Grep]{
+\label{fig:subfig:sort-grep}
+\includegraphics[width=0.3\textwidth]{sort-grep.pdf}}
+%\hspace{-3ex}
+\subfigure[WC+Grep]{
+\label{fig:subfig:wc-grep}
+\includegraphics[width=0.3\textwidth]{wc-grep.pdf}}
+%\hspace{-1.9ex}
+\subfigure[Sort+WC+Grep]{
+\label{fig:subfig:sort-wc-grep}
+\includegraphics[width=0.3\textwidth]{sort-wc-grep.pdf}}
+%\hspace{-1.9ex}
+%\subfigure[Active tasks]{
+%\label{fig:subfig:activetasks}
+%\includegraphics[width=0.3\textwidth]{active-task.pdf}}
+%\vspace*{-5mm}
+\caption{Results of memory pressure without caching}
+%\vspace*{-4mm}
+\label{fig:pressurewithoutcache}
+\end{figure*}
+
+When two applications are submitted to the server, MURS works better in Sort and Grep. Comparing Sort to WC, heavy memory pressure occurs in different phase. The \textit{sort} operation is implemented in the \textit{read phase} of tasks. Thus the tasks in the last stage of Sort suffer heavy memory pressure during their read phase. However, \textit{reduce} operation in WC is realized in the \textit{write phase} of tasks. Heavy memory pressure is resulted in by the write phase of tasks in the first stage. What's more, massive temporary data objects are produced by the function API \textit{flatMap} before the write phase. They may be currently alive in the heap during the write phase in WC. Although tasks in Sort belong to linear and tasks in WC are sub-linear based on the memory usage model, MURS suspends more tasks in WC as the heap size in WC is occupied by the temporary data objects, as shown in Figure~\ref{fig:active-task}. And these temporary data objects result in frequenter garbage collection. We can see that suspending in MURS is determined not only by the memory usage models, but also the current usage of heap. 
+
+While three applications are submitted, out-of-memory (OME) is thrown by the server. Although the live shuffle buffer is smaller than those sever with two applications, some other data objects cost much heap space, such as the recording of living applications, the handler of disk writing, and the global configurations of Spark. Spark provides spill to avoid the shortage of memory. However, it cannot completely avoid the OME.
+
+MURS mitigates memory pressure in each application and we find that the performance slows down tardily along with the heap size. The result shows that the cost of garbage collection is stable. As MURS suspends the heavy tasks, the tardily increasing cost in execution time is the computation time actually.  
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.35\textwidth]{active-task.pdf}
+%\vspace{-2mm}
+\caption{The minimum active tasks in each server}
+%\vspace{-4mm}
+\label{fig:active-task}
+\end{figure}
+
 \subsection{Memory pressure with caching}
 
 Some frameworks provide caching mechanism for in-memory computation, such as Spark and Flink. Although the in-memory caching data speed up the execution of a job, some works~\cite{bu:bloat, nguyen2015facade} show that it results in greater memory pressure because the caching data live along with the job. Tracing these data is expensive and there is less accessible memory space for execution.
 
-We choose PR and WC as the submitted applications. PR is an iterative application and we run 5 iterations in our experiments. PR caches intermediate data in memory after the first iteration. WC is submitted at the second iteration. We first adjust the heap size to show the performance of MURS, while the input dataset is 30GB, as shown in Figure. Execution of each application is shown in Figure.
+We choose PR and WC as the submitted applications. PR is an iterative application and we run 5 iterations in our experiments. PR caches intermediate data in memory after the first iteration. WC is submitted at the second iteration. We adjust the heap size to show the performance of MURS, while the input dataset is 30GB, as shown in Figure~\ref{fig:cache-total}. When the heap size is less than 17GB, Spark in server will throw Out-of-Memory error (OME). MURS can provide server although the heap size is reduced to 15GB. While they are both working, MURS improves the performance by up to 23.4\%, and the mitigation of memory pressure achieve a 65.4\% improvement.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.45\textwidth]{cache-total.pdf}
+%\vspace{-2mm}
+\caption{The Execution and GC Time of PR and WC in Server}
+%\vspace{-4mm}
+\label{fig:cache-total}
+\end{figure}
+
+Less heap size in each node means more memory pressure in the server. When the heap is exhausted, tasks will throw the OME. With the caching data in memory, Spark for server throws the OME as the heap size of each node is 17GB. However, MURS is committed to mitigate the heavy memory pressure and still working well although the heap size of each node reduces to 15GB. MURS suspends heavy tasks to reduce the active tasks, thus running tasks can utilize more memory. Figure~\ref{fig:cache-peak} shows that the peak memory usage of all tasks in MURS persists to be larger than Spark. And the minimum tasks in MURS is reduced to ensure the available memory for running tasks. In other words, MURS has stronger scalability than Spark for server.
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.45\textwidth]{cache-peak.pdf}
+%\vspace{-2mm}
+\caption{The peak usage memory of tasks and minimum active tasks}
+%\vspace{-4mm}
+\label{fig:cache-peak}
+\end{figure}
+
+\subsection{Potential starvation in MURS}
+
+Note that the mitigation of memory pressure leads to the delay in computation. This will lead to potential starvation in suspended tasks. Fortunately, MURS solve this problem in the application level. We take the same configurations in the previous subsection. While PR and WC are submitted to the server, tasks of PR have the same \textit{write phase} as tasks of WC. But they contain more function APIs. Thus tasks of PR are mostly classified as heavy tasks. They will be suspended when the memory pressure is heavy. The execution time of each application is shown in Figure~\ref{fig:cache-prwc}. The result shows no starvation in PR, and PR is also benefit from MURS and the performance is improved by up to 24.4\%. The performance in WC which has light tasks also achieves a 29.8\% improvement. 
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.35\textwidth]{cache-prwc.pdf}
+%\vspace{-2mm}
+\caption{The execution time of each application}
+%\vspace{-4mm}
+\label{fig:cache-prwc}
+\end{figure}
+
+MURS provides FIFO algorithm when it resumes the suspended tasks. This avoids the long wait of these tasks. Otherwise, suspending these tasks is to mitigate the memory pressure, not only for the current running light tasks but also the next running heavy tasks. In the application level, transient suspending and lighter memory pressure are actually trade-off. 
 
 \subsection{Avoidance of spill}
 
@@ -52,7 +127,7 @@ MURS sets the red value to avoid spill when memory pressure is heavy in these sy
 \begin{tabular}{ c | c | c | c | c | c | c | c }
 
 \hline
-\multirow{2}{*}{} & \multirow{2}{*}{\textbf{App}} & \multicolumn{3}{| c |}{\textbf{Spill Percentage}} & \multicolumn{3}{| c |}{\textbf{Spill Size (MB)}} \\
+\multirow{2}{*}{} & \multirow{2}{*}{\textbf{App}} & \multicolumn{3}{| c |}{\textbf{Spill Percentage}} & \multicolumn{3}{| c }{\textbf{Spill Size (MB)}} \\
 \cline{3-8}
  & & total & spill & percent & min & mid & max \\
 \hline

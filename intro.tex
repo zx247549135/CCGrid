@@ -29,7 +29,7 @@ As memory pressure comes from massive long lived data objects produced by the ru
 
 %Last but not the least, stopping tasks of some jobs is not appropriate in some way. Thus we provide multi launch to balance the stop, which can 1) speed up the occur of memory pressure and the response time for all submitted jobs; 2) increase the memory usage when all tasks have light pressure on memory by increasing parallelism. High parallelism instead of more memory pressure can improve the performance in some way. 
 
-We implement MURS in Spark and the evaluation shows that the execution time can be reduced by up to 58\%. The garbage collection which directly measures the memory pressure can be also decreased by a maximum of 94\% in some tasks. In summary, three main contributions of this paper are:
+We implement MURS in Spark and the evaluation shows that the execution time can be reduced by up to 65.8\% (2.9X). The garbage collection which directly measures the memory pressure can be also decreased by a maximum of 81\%. MURS also extends the scalability of system, as systems can provide server although the memory resource is shortage. In summary, three main contributions of this paper are:
 
 \begin{itemize}
 
@@ -41,7 +41,7 @@ We implement MURS in Spark and the evaluation shows that the execution time can 
 
 %\item We propose multi launch to speed up the advent of memory pressure and increase the parallelism. The balance of pressure and parallelism can also improve the performance in some sense.
 
-\item We implement a prototype system based on Spark. The proposed method can be ported to other similar data processing systems. The experimental results have shown that our system can significantly improve system performance and reduce garbage collection.
+\item We implement a prototype system based on Spark. The proposed method can be ported to other similar data processing systems. The experimental results have shown that our system can significantly improve system performance, reduce garbage collection and extend the scalability of server.
 
 \end{itemize}
 
