@@ -33,9 +33,9 @@ The memory pressure originates from massive long-living data objects produced by
 
 %Last but not the least, stopping tasks of some jobs is not appropriate in some way. Thus we provide multi launch to balance the stop, which can 1) speed up the occur of memory pressure and the response time for all submitted jobs; 2) increase the memory usage when all tasks have light pressure on memory by increasing parallelism. High parallelism instead of more memory pressure can improve the performance in some way. 
 
-We implement MURS in Spark and conduct the extensive experiments. The experiments results shows that the execution time can be reduced by up to 65.8\% (2.9X). The garbage collection, which directly measures the memory pressure, can decrease by a maximum of 81\%. MURS can also help improve the scalability of system, as the system equipped with MURS can still provide high quality of service even if the memory is in shortage. 
+We implement MURS in Spark and conduct the extensive experiments. The experiments results shows that the execution time can be reduced by up to 65.8\% (2.9X). The garbage collection, which directly measures the memory pressure, can decrease by a maximum of 81\%. MURS can also help improve the scalability of the system, as the system equipped with MURS can still provide high quality of service even if the memory is in shortage. 
 
-In summary, this work offers the following three main contributions:
+In summary, this work offers the following three main contributions.
 
 \begin{itemize}
 
