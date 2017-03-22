@@ -43,23 +43,23 @@ Google & MapReduce & FlumeJava~\cite{flumejava} & Tenzing, Pregel, Sibyl & paral
 \label{table:apps}
 \end{table*}
 
-Frameworks provide several function APIs, and they can be used to implement various applications. These function APIs work on the input dataset and produce another dataset, but the type of data in the dataset may be different. Current popular distributed data processing systems contain function APIs themselves in Table~\ref{table:apps}. Most function APIs are sourced from MapReduce, a famous computing framework. Further function APIs are also used to control the execution of jobs; the typical case is shuffle operations. Shuffle operations are used between \textit{Map} and \textit{Reduce} phase, and regarded as the break point of jobs, because tasks after shuffle operations (\textit{Reduce} tasks) need all results from tasks before shuffle operations (\textit{Map} tasks).
+A data processing system provides several function APIs, which can be used to implement various applications. These function APIs take as input the input dataset and produce another dataset. The type of data in the dataset may be different. Table~\ref{table:apps} lists the function APIs provided by popular data processing systems. Most function APIs are sourced from MapReduce, a famous computing framework. Other function APIs are used to control the execution of jobs, the typical case of which is the shuffle operations. The shuffle operations are used between the \textit{Map} and the \textit{Reduce} phase, and are regarded as the separation point of a job, because the tasks after the shuffle operations (i.e., \textit{Reduce} tasks) need all results calculated by the tasks before the shuffle operations (\textit{Map} tasks).
 
-These function APIs are all based on key-value pairs: (\textit{K}, \textit{V}). Some function APIs can omit the \textit{K} or \textit{V} for users, but add the default value during the process, such as \textit{map} and \textit{reduce}. The necessary memory space for a function API is used to store the alive result data objects, because temporary data objects will be reclaimed after the garbage collection. The demand of memory space decides the memory usage characteristics. Based on the key-value pairs, the size of alive result data objects in memory is related to both \textit{K} and \textit{V}:
+These function APIs are all based on key-value pairs: (\textit{K}, \textit{V}). Some function APIs omit the parameter \textit{K} or \textit{V} for the convenience of users. Rather, the default value of the omitted parameters are used during the processes of \textit{map} or \textit{reduce}. The memory space is used by a function API to store the living data objects, because temporary data objects will be reclaimed by the garbage collection. The memory demand determines the characteristic of memory usage. Based on the key-value pairs, the memory size of living data objects is related to both \textit{K} and \textit{V} in the following ways.
 
 \begin{itemize}
 
-\item If the function API does not distinguish the \textit{K}, it will process each record without involving other records. And one record will produce one new record accordingly. If the new record is cached in memory, the size of demand memory will increase without doubt; if the new record is processed as the input of the next function API or write-to-disk, it will be regarded as a temporary data object and quickly transmitted to the next function API. The size of temporary data object is ignored as it will be reclaimed in next garbage collection.
+\item If the function API does not distinguish the parameter \textit{K}, it processes a record without involving other records. A record will produce a new record accordingly. If the new record is cached in memory, the consumed memory size will certainly increase. If the new record is processed as the input of the next function API or write-to-disk, it will be regarded as a temporary data object and quickly transmitted to the next function API. The size of temporary data object is ignored as it will be reclaimed in the next round of garbage collection.
 
-\item If the function API distinguishes the \textit{K}, it will involve all records to process these records with the particular \textit{K}. Function APIs that involve all records are usually called as shuffle. While shuffling the records to get all \textit{V} with the particular \textit{K}, there are two operations that can be executed on current \textit{V}: aggregation and non-aggregation.
+\item If the function API distinguishes \textit{K}, it will involve all records to process these records with a particular \textit{K}. The function APIs that involve all records are usually called shuffle. While the shuffling stage processes the records to get all \textit{V} with a particular \textit{K}, two operations can be performed on \textit{V}: aggregation and non-aggregation.
 
-\item If the function API does not aggregate the \textit{V}, it means that it just puts \textit{V} into a collection without involving other \textit{V}. The collection contains the intermediate data and has a long lifetime because it will live until the task processes over all records. The collection is usually called as shuffle buffer. After processing one record, the collection will increase by one element, thus the size of shuffle buffer must increase in memory.
+\item If the function API does not aggregate the \textit{V}, it only puts \textit{V} in a collection without involving other \textit{V}. The collection contains the intermediate data and has a long lifetime because it is alive until the task processes all records. The collection is usually called the shuffle buffer. After a record is processed, the size of the collection increases by one element and thus the memory size of the shuffle buffer must increase.
 
-\item If the function API aggregates the \textit{V}, the intermediate collections will be replaced by the aggregated value, and we also call this long lifetime data objects as shuffle buffer. Aggregation of \textit{V} means some operations will be implemented on all \textit{V} with particular \textit{K} and produce a new value. Thus, the resulting size in memory will only increase when \textit{K} has not appeared.
+\item If the function API aggregates the \textit{V}, the intermediate collection will be replaced by the aggregated value. We also call these data objects with long lifetime the shuffle buffer. Aggregation of \textit{V} means some operations will be performed on all \textit{V} with a particular \textit{K} and produce a new value. Thus, the resulting memory size of the collection will increase when \textit{K} has not appeared yet.
 
 \end{itemize}
 
-As the operations on \textit{K} and \textit{V} decide the size of alive result data objects in memory, we build four models here to measure the memory usage of each function API when it processes a unit of data. The models are based on processed size, not the processed records, because the size of one record in each dataset is different. Memory usage refers to the space storing long lifetime data objects in memory except garbage data objects. The four models are shown in Figure~\ref{fig:mur}. And we can determine which memory usage model of a function API according to the following lemmas.
+As the operations on \textit{K} and \textit{V} decide the size of the living data objects in memory, we build four models in this work to measure the memory usage of each function API when it processes a unit of data. The models are based on the size of the records that are processed, not on the number of the processed records, because the size of a record in each dataset is different. Memory usage refers to the memory space used to store the data objects with long lifetime except the garbage data objects. The four models are shown in Figure~\ref{fig:mur}. We determine the memory usage model of a function API by using the following lemmas.
 
 \begin{figure}[!t]
 \centering
@@ -71,41 +71,41 @@ As the operations on \textit{K} and \textit{V} decide the size of alive result d
 \end{figure}
 
 \newtheorem{lemma}{Lemma}
-\begin{lemma}[Constant] The memory usage model can be defined as constant (Line I in Figure~\ref{fig:mur}) only when the followings are true:
+\begin{lemma}[Constant] The memory usage model can be defined as constant (Line I in Figure~\ref{fig:mur}) only when the following conditions are true:
 \begin{enumerate}
-\item The function API does not distinguish the \textit{K};
-\item The result data will not be cached in memory.
+\item The function API does not distinguish the key, \textit{K};
+\item The resulting data will not be cached in memory.
 \end{enumerate}
 \end{lemma}
 
-\begin{lemma}[Sub-Linear] The memory usage model can be defined as sub-linear (Line II in Figure~\ref{fig:mur}) only when the followings are true:
+\begin{lemma}[Sub-Linear] The memory usage model can be defined as sub-linear (Line II in Figure~\ref{fig:mur}) only when the following conditions are true:
 \begin{enumerate}
-\item The function API distinguishes the \textit{K};
-\item The function API aggregates the \textit{V};
-\item The \textit{K} in input dataset is appeared randomly.
+\item The function API distinguishes the key, \textit{K};
+\item The function API aggregates the value, \textit{V};
+\item \textit{K} appears randomly in the input dataset.
 \end{enumerate}
 \end{lemma}
 
-Note that the appearance of \textit{K} is random, because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers in the near records, the size of intermediate data will increase linearly.
+Note that the reason why we require that \textit{K} appears randomly is because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers around some neighbouring records, the size of intermediate data will increase linearly.
 
-\begin{lemma}[Linear] The memory usage model can be defined as linear (Line III in Figure~\ref{fig:mur}) when the followings are true:
+\begin{lemma}[Linear] The memory usage model can be defined as linear (Line III in Figure~\ref{fig:mur}) when the following conditions hold:
 \begin{enumerate}
-\item The function API distinguishes the \textit{K};
-\item The function API does not aggregate the \textit{V}.
+\item The function API distinguishes \textit{K};
+\item The function API does not aggregate \textit{V}.
 \end{enumerate}
 \end{lemma}
 
-Cache operation and the appearance of \textit{K} both affect the increasing size of intermediate data; thus, although some function APIs have the same operations on \textit{K} and \textit{V}, their memory usage models are different. The constant model requires that intermediate data cannot be cached in memory. The increasing model is determined by the size of caching data object. The sub-linear model also requires the balanced appearance of \textit{K}. When a function API does not satisfy the above conditions, we need to redefine their models. In other words, the model is defined not only by the function APIs, but also by the user define function or data distribution. The memory usage model should be redefined when the followings are true:
+Both cache operations and the appearance pattern of \textit{K} affect the  size of intermediate data. Thus although some function APIs have the same operations on \textit{K} and \textit{V}, their memory usage models may be different. The constant model requires that intermediate data are not cached in memory. The increasing model is determined by the size of the cached data objects. The sub-linear model also requires the random appearance of \textit{K}. When a function API does not satisfy the above conditions, we need to redefine their models. In other words, the model is defined not only by the function APIs, but also by the user-defined function or data distribution. The memory usage model should be redefined when the following conditions are true:
 
 \begin{itemize}
 
 \item If the function API does not distinguish the \textit{K} and the result data are cached in memory, the speed of increasing size in memory can be 1) \textit{linear} (Line III in Figure~\ref{fig:mur}) when the function API does not work based on formal result; 2) \textit{super-linear} (Line IV in Figure~\ref{fig:mur}) when the function API produces larger result data, such as computing a histogram of the appeared numbers and all their divisors; 3) \textit{sub-linear} (Line II in Figure~\ref{fig:mur}) when the function API produces smaller result data along with the computation. 
 
-\item If the function API distinguishes the \textit{K} and not aggregates the \textit{V}, but the input dataset has not appeared \textit{K} or the appearance of \textit{K} is not random. The memory usage model should be linear.
+\item If a function API i) distinguishes \textit{K}, ii) does not aggregate \textit{V}, iii) \textit{K} has not appeared yet in the input dataset or the appearance of \textit{K} is not random. The memory usage model of the function API should be linear.
 
 \end{itemize}
 
-Note that when function APIs belong to the same linear model, they can also be distinguished because the slope of line in Figure~\ref{fig:mur} may be different. The value of slope is larger, the impact on memory pressure is heavier. Based on the slope and four models, we can distinguish all function APIs in variety data processing systems.
+Note that when function APIs belong to the same linear model, they can also be distinguished because the slope of the line in Figure~\ref{fig:mur} may be different. Steeper the slope is, the heavier impact the API function has on memory pressure. Based on the slope and four models, we can distinguish all function APIs in various data processing systems.
 
 %If one function API does not satisfy one of the lemmas, we define them as the super-linear model. One possible super-linear model is shown as the Line IV in the figure. However, we find that no function API can be defined as the super-linear within the range of our research, most function APIs will show the memory usage as other three models in our evaluations.
 
@@ -117,14 +117,14 @@ Note that when function APIs belong to the same linear model, they can also be d
 
 %Most function APIs can satisfy these three items. Other function APIs, such as \textit{cache}, are designed to lengthen the lifetime of intermediate data but not influence the memory usage during processing. Further function APIs are also used to control the execution of jobs, the typical case is shuffle operations. Shuffle operations are used between Map and Reduce, and regarded as the break point of jobs. Because tasks after shuffle operations (reduce tasks) need all results of tasks before shuffle operations (Map tasks).  
 
-\subsection{Memory usage models in task}
+\subsection{Memory usage models in tasks}
 \label{subsec:taskmodel}
 
-A task is implemented by at least one function API. Some systems define only one function API in each task, such as Hadoop. Other systems define the function APIs in a task according to the shuffle operations in user-defined program, such as Spark and Dryad. As shuffle operations are used to split the jobs, they implement both shuffle write and shuffle read, thus we consider the memory usage of one task by three phases: read, process, and write. The read and write phase of a task only contain one shuffle function API, or no function API if they read/write from/to disk or print in screen. If a task has process phase, the phase contains several function APIs. 
+A task is implemented by at least one function API. Some systems define only one function API in each task, such as Hadoop. Other systems define the function APIs in a task according to the shuffle operations in the user-defined program, such as Spark and Dryad. As the shuffle operations are used to split the jobs, they implement both shuffle write and shuffle read. Thus, we consider the memory usage of a task in three phases: read, process, and write. The read and write phase of a task only contain one shuffle function API, or no function API if they read/write from/to disk or print in screen. If a task has a process phase, the phase contains several function APIs. 
 
-The read and write phases of tasks have independently memory usage models with strict order. However, the memory usage model of process phase is different. Function APIs in the process phase are always constant models. They never distinguish the \textit{K}, and do not need to calculate all intermediate data. Thus they process each record as a temporary data object and quickly transmit intermediate data to the next function API. All constant models will not be shown in the memory usage of a task if the write phase of task has shuffle operations, because the size of shuffle buffer is much larger than constant models. But when the task caches intermediate data in memory, these intermediate data will be transmitted to next function API after the computation of current function API. And the model is redefined. The redefined model will also be combined to the models in a task independently. On account of several memory usage models in a task, when we scheduler the task, we can only monitor the current memory usage model. During mitigating the current memory pressure, we just use the current memory usage model to calculate the memory usage of the task.
+The read and write phases of a task have independent memory usage models with a strict order. However, the memory usage model of the process phase is different. A function API in the process phase is always of the constant model. They never distinguish  \textit{K} and do not need to calculate all intermediate data. Thus they process each record as a temporary data object and quickly pass the intermediate data to the next function API. All constant models will not be shown in the memory usage of a task if the write phase of the task has the shuffle operations. This is because the size of the shuffle buffer is much bigger than the constant models. However, when the task caches intermediate data in memory, these intermediate data will be transmitted to the next function API after completing the current function API. Under this circumstance, the model is redefined. The redefined model will be combined with the independent models in a task. When there are several memory usage models in a task, we can only monitor the current memory usage model when we schedule the task. When reducing the current memory pressure, we use the current memory usage model to calculate the memory usage of the task.
 
-Based on the memory usage models in a task, we just need the slope of each line in Figure~\ref{fig:mur} to determine the current memory usage model. We refer to the slope as the \textit{memory usage rate}. Thus, we define the memory usage rate of a task as follows: the size of long-lived data objects produced in memory when a task processes a unit size of inputs. 
+Based on the memory usage models in a task, we only need the slope of each line in Figure~\ref{fig:mur} to determine the current memory usage model. We term the slope the \textit{memory usage rate}. Thus, the memory usage rate of a task is defined as the memory size of the newly produced long-living data objects when a task processes a unit of input data.
 
 %It is clear that when the function API distinguishes the \textit{K} and not aggregates the \textit{V}, the memory usage of result data will increase after each record is processed. Thus it will have stable necessary of memory space compared to sub-linear model. The linear model can be defined as the Line III in Figure~\ref{fig:mur}. We notice that as the slope of line can be different, linear model can also have different impact on the memory pressure. The slope can be decided by the type of result data.
 
