@@ -74,15 +74,15 @@ As the operations on \textit{K} and \textit{V} decide the size of the living dat
 Memory usage refers to the memory space used to store the data objects with long lifetime except the garbage data objects. The four models are shown in Figure~\ref{fig:mur}. 
 %We determine the memory usage model of a function API by using the following lemmas.
 
-When the function API does not distinguish the key, and the result data will not be cached in memory, the memory usage model of this function can be defined as constant (Line I in Figure~\ref{fig:mur}). If the function API distinguishes the key and aggregates the value, and the key appears randomly in the input dataset, the memory usage model of this function can be defined as sub-Linear (Line II in Figure~\ref{fig:mur}). 
-Note that the reason why we require that \textit{K} appears randomly is because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers around some neighbouring records, the size of intermediate data will increase linearly. While the function API distinguishes \textit{K}, but it does not aggregate \textit{V}, the memory usage model can be defined as linear (Line III in Figure~\ref{fig:mur}). 
+When the function API does not distinguish the key, and the result data will not be cached in memory, the memory usage model of this function can be defined as \textit{constant} (Line I in Figure~\ref{fig:mur}). If the function API distinguishes the key and aggregates the value, and the key appears randomly in the input dataset, the memory usage model of this function can be defined as \textit{sub-linear} (Line II in Figure~\ref{fig:mur}). 
+Note that the reason why we require that \textit{K} appears randomly is because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers around some neighbouring records, the size of intermediate data will increase linearly. While the function API distinguishes \textit{K}, but it does not aggregate \textit{V}, the memory usage model can be defined as \textit{linear} (Line III in Figure~\ref{fig:mur}). 
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.3\textwidth]{mur.pdf}
+\includegraphics[width=0.25\textwidth]{mur.pdf}
 \vspace{-2mm}
 \caption{Four coarse-grained models of function API}
-\vspace{-4mm}
+\vspace{-6mm}
 \label{fig:mur}
 \end{figure}
 

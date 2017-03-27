@@ -4,6 +4,7 @@
 
 We conducted the extensive experiments to evaluate the performance of the methods proposed in this work. In the experiments, we use four nodes as the workers and one node as the master. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mounted on a SAS disk, running the RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We record not only the execution time of each application, but also the detailed runtime situations.
 
+\begin{comment}
 \begin{table}[!t]
 \small
 \centering
@@ -29,10 +30,13 @@ PR & N & \textit{groupByKey} \& \textit{map} \& \textit{reduceByKey} & Yes \\
 \vspace{-4mm}
 \label{table:app}
 \end{table} 
+\end{comment}
 
 We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC) and PangeRank(PR). 
 %Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. 
-We choose these four benchmarks because these applications contain different function APIs, as shown in Table~\ref{table:app}. For Sort and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and WC are 30GB and 50GB, respectively. For Grep and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. 
+We choose these four benchmarks because these applications contain different function APIs
+%, as shown in Table~\ref{table:app}
+. For Sort and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and WC are 30GB and 50GB, respectively. For Grep and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. 
 %We use the heap size to evaluate different memory pressure. 
 The garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to the Spark Job Server together.
 
@@ -46,39 +50,41 @@ We choose three applications: Sort, WC, and Grep. These applications do not perf
 \centering
 \subfigure[Sort+Grep]{
 \label{fig:subfig:sort-grep}
-\includegraphics[width=0.3\textwidth]{sort-grep.pdf}}
+\includegraphics[width=0.23\textwidth]{sort-grep.pdf}}
 %\hspace{-3ex}
 \subfigure[WC+Grep]{
 \label{fig:subfig:wc-grep}
-\includegraphics[width=0.3\textwidth]{wc-grep.pdf}}
+\includegraphics[width=0.23\textwidth]{wc-grep.pdf}}
 %\hspace{-1.9ex}
 \subfigure[Sort+WC+Grep]{
 \label{fig:subfig:sort-wc-grep}
-\includegraphics[width=0.3\textwidth]{sort-wc-grep.pdf}}
+\includegraphics[width=0.23\textwidth]{sort-wc-grep.pdf}}
 %\hspace{-1.9ex}
-%\subfigure[Active tasks]{
-%\label{fig:subfig:activetasks}
-%\includegraphics[width=0.3\textwidth]{active-task.pdf}}
-\vspace*{-2mm}
+\subfigure[Active tasks]{
+\label{fig:subfig:activetasks}
+\includegraphics[width=0.23\textwidth]{active-task.pdf}}
+\vspace*{-4mm}
 \caption{Results of memory pressure without caching}
 \vspace*{-4mm}
 \label{fig:pressurewithoutcache}
 \end{figure*}
 
-When two applications are submitted to the server, MURS works better in Sort and Grep. Comparing Sort to WC, the heavy memory pressure occurs in the different phase. The \textit{sort} operation is implemented in the \textit{read phase} of the tasks. Thus the tasks in the last stage of Sort suffer from the heavy memory pressure during their read phases. However, the \textit{reduce} operation in WC is realized in the \textit{write phase} of the tasks. The heavy memory pressure is caused by the write phase of the tasks in the first stage. Moreover, massive temporary data objects are produced by the function API \textit{flatMap} before the write phase. They may be currently alive in the heap during the write phase in WC. Although the tasks in Sort belong to the linear memory usage model and the tasks in WC are sub-linear, MURS suspends more tasks in WC as the heap size in WC is occupied by the temporary data objects, as shown in Figure~\ref{fig:active-task}. These temporary data objects result in frequenter garbage collections. We can see that suspension in MURS is determined not only by the memory usage models, but also by the current usage of the heap. 
+When two applications are submitted to the server, MURS works better in Sort and Grep. Comparing Sort to WC, the heavy memory pressure occurs in the different phase. The \textit{sort} operation is implemented in the \textit{read phase} of the tasks. Thus the tasks in the last stage of Sort suffer from the heavy memory pressure during their read phases. However, the \textit{reduce} operation in WC is realized in the \textit{write phase} of the tasks. The heavy memory pressure is caused by the write phase of the tasks in the first stage. Moreover, massive temporary data objects are produced by the function API \textit{flatMap} before the write phase. They may be currently alive in the heap during the write phase in WC. Although the tasks in Sort belong to the linear memory usage model and the tasks in WC are sub-linear, MURS suspends more tasks in WC as the heap size in WC is occupied by the temporary data objects, as shown in Figure~\ref{fig:subfig:activetasks}. These temporary data objects result in frequenter garbage collections. We can see that suspension in MURS is determined not only by the memory usage models, but also by the current usage of the heap. 
 
 When three applications are submitted, out-of-memory (OME) is thrown by the server. Although the live shuffle buffer in this case is smaller than the case with two applications, some other data objects occupy much heap space, such as the recording of living applications, the handler of disk writing, and the global configurations of Spark. Spark provides the spilling capability to overcome the shortage of memory. However, it cannot completely avoid the OME.
 
 MURS mitigates the memory pressure in each application and we find that the performance slows down tardily along with the heap size. The result shows that the cost of garbage collection is stable. As MURS suspends the heavy tasks, the slow increase in execution time due to the increase in computation time.  
 
+\begin{comment}
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.35\textwidth]{active-task.pdf}
+\includegraphics[width=0.3\textwidth]{active-task.pdf}
 \vspace{-2mm}
 \caption{The minimum active tasks in each server}
-\vspace{-4mm}
+\vspace{-6mm}
 \label{fig:active-task}
 \end{figure}
+\end{comment}
 
 \subsection{Memory pressure with caching}
 
@@ -88,10 +94,10 @@ PR and WC are used as the experimental applications. PR is an iterative applicat
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.45\textwidth]{cache-total.pdf}
+\includegraphics[width=0.35\textwidth]{cache-total.pdf}
 \vspace{-2mm}
 \caption{The Execution and GC Time of PR and WC in Server}
-\vspace{-4mm}
+\vspace{-6mm}
 \label{fig:cache-total}
 \end{figure}
 
@@ -99,25 +105,25 @@ Less heap size in each node means more memory pressure in the server. When the h
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.45\textwidth]{cache-peak.pdf}
+\includegraphics[width=0.35\textwidth]{cache-peak.pdf}
 \vspace{-2mm}
 \caption{The peak usage memory of tasks and minimum active tasks}
-\vspace{-4mm}
+\vspace{-2mm}
 \label{fig:cache-peak}
 \end{figure}
 
-\subsection{Potential starvation in MURS}
+%\subsection{Potential starvation in MURS}
 
 The mitigation strategy of memory pressure delays the computation of suspended tasks. This may cause the starvation of the suspended tasks. MURS address this issue in the application level.
-
-The settings of the experiment presented in this subsection are the same as those in the previous subsection. When PR and WC are submitted to the server, the tasks of PR have the same \textit{write phase} as the tasks of WC, but contain more function APIs. Thus the tasks of PR are mostly classified as the heavy tasks. They will be suspended when the memory pressure is heavy. The execution time of each application is shown in Figure~\ref{fig:cache-prwc}. The result shows there is no starvation for PR. Benefiting from MURS, the performance of PR is improved by up to 24.4\%. The performance of WC, which contains light tasks, also achieves a 29.8\% improvement. 
+%The settings of the experiment presented in this subsection are the same as those in the previous subsection. When PR and WC are submitted to the server, the tasks of PR have the same \textit{write phase} as the tasks of WC, but contain more function APIs. Thus the tasks of PR are mostly classified as the heavy tasks. They will be suspended when the memory pressure is heavy. 
+The execution time of each application is shown in Figure~\ref{fig:cache-prwc}. The result shows there is no starvation for PR. Benefiting from MURS, the performance of PR is improved by up to 24.4\%. The performance of WC, which contains light tasks, also achieves a 29.8\% improvement. 
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.35\textwidth]{cache-prwc.pdf}
+\includegraphics[width=0.28\textwidth]{cache-prwc.pdf}
 \vspace{-2mm}
 \caption{The execution time of each application}
-\vspace{-4mm}
+\vspace{-6mm}
 \label{fig:cache-prwc}
 \end{figure}
 
@@ -131,21 +137,22 @@ MURS sets the red threshold to avoid the spill when the memory pressure is heavy
 \small
 \centering
 \caption{Spill Tasks in MURS and Spark}
-\begin{tabular}{ c | c | c | c | c | c | c | c }
+\vspace{-2mm}
+\begin{tabular}{ c | c | c | c | c | c }
 
 \hline
-\multirow{2}{*}{} & \multirow{2}{*}{\textbf{App}} & \multicolumn{3}{| c |}{\textbf{Spill Percentage}} & \multicolumn{3}{| c }{\textbf{Spill Size (MB)}} \\
-\cline{3-8}
- & & total & spill & percent & min & mid & max \\
+\multirow{2}{*}{\textbf{App}} & \multirow{2}{*}{\textbf{Tasks}} & \multicolumn{2}{| c |}{\textbf{Spark}} & \multicolumn{2}{| c }{\textbf{MURS}} \\
+\cline{3-6}
+ &  & spill & percent & spill & percent \\
 \hline
-\multirow{2}{*}{Spark} & WC & 1000 & 91 & 9\% & 0 & 0 & 710 \\
-\cline{2-8}
- & PR & 1500 & 480 & 32\% & 310 & 367 & 439 \\
+WC & 1000 & 91 & 9\% & 0 & 0\% \\
 \hline
-\multirow{2}{*}{MURS} & WC & 1000 & 0 & 0\% & - & - & -  \\
-\cline{2-8}
- & PR & 1500 & 37 & 2.5\% & 0 & 0 & 458 \\
+PR & 1500 & 480 & 32\% & 37 & 2.5\% \\
 \hline
+%\multirow{2}{*}{MURS} & WC & 1000 & 0 & 0\% & - & - & -  \\
+%\cline{2-8}
+% & PR & 1500 & 37 & 2.5\% & 0 & 0 & 458 \\
+%\hline
 
 \hline
 \end{tabular}
@@ -155,4 +162,8 @@ MURS sets the red threshold to avoid the spill when the memory pressure is heavy
 \label{table:spill}
 \end{table}
 
-We notice that the error exists when avoiding the spill. The sampler in MURS counts two important metrics for a task: the percentage of the processed records in the total records, and the currently allocated memory space for this task. We can quickly obtain the required memory space based on these two metrics. When the memory pressure reaches the red threshold, we suspend a part of the running tasks and leave enough memory space for the remaining running tasks. As the estimate is based on sampling, the error exists in terms of the estimated size of the allocated memory space, especially when the value in some key-value pairs is a collection. Different records have different sizes because the number of values inside a collection is different, such as \textit{groupByKey} in PR. Some hot keys may result in a substantial error. Thus, there are even fewer spilling tasks in MURS that the figures reported in the experiments.
+We notice that the error exists when avoiding the spill. The sampler in MURS counts two important metrics for a task: the percentage of the processed records in the total records, and the currently allocated memory space for this task. 
+%We can quickly obtain the required memory space based on these two metrics. 
+%When the memory pressure reaches the red threshold, we suspend a part of the running tasks and leave enough memory space for the remaining running tasks. 
+As the estimate is based on sampling, the error exists in terms of the estimated size of the allocated memory space, especially when the value in some key-value pairs is a collection. Different records have different sizes because the number of values inside a collection is different, such as \textit{groupByKey} in PR. %Some hot keys may result in a substantial error. 
+Thus, there are even fewer spilling tasks in MURS that the figures reported in the experiments.

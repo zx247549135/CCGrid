@@ -1,13 +1,15 @@
 \section{Motivation}
 \label{sec:motivation}
 
-Memory is a critical type of resource in current data processing systems, especially in the in-memory computing systems~\cite{shi:mammoth}. However, limited memory space leads to memory pressure and can cause frequent garbage collection or out-of-memory errors~\cite{fang2015interruptible}, both of which seriously affect the performance of the data processing system. A data processing system is often deployed as a service. To understand the impact of memory pressure on the data processing systems and identify the cause of inefficiency, we investigate the running of the tasks with different memory requirements. We choose two types of applications, PageRank(PR) and WordCount(WC), which are the common benchmarks in Spark. The input dataset of PR and WC are webbase-2001 (30GB) and HiBench Random Writer (50GB). As a data processing system, Spark can also work as a server through Spark Job Server. We first run the tasks in the service mode, in which we submit PR and WC simultaneously to the Spark server and run them with a fair scheduler in Spark. As a comparison, we also run PR and WC in the batch mode, in which PR and WC are processed one after the other. We record the execution times and garbage collections times of all tasks under these two modes, which are plotted in Figure~\ref{fig:memorypressure}. We then analyze the memory pressure through the results. 
+Memory is a critical type of resource in current data processing systems, especially in the in-memory computing systems~\cite{shi:mammoth}. However, limited memory space leads to memory pressure and can cause frequent garbage collection or out-of-memory errors~\cite{fang2015interruptible}, both of which seriously affect the performance of the data processing system. A data processing system is often deployed as a service. To understand the impact of memory pressure on the data processing systems and identify the cause of inefficiency, we investigate the running of the tasks with different memory requirements. We choose two types of applications, PageRank(PR) and WordCount(WC), which are the common benchmarks in Spark. The input dataset of PR and WC are webbase-2001 (30GB) and HiBench Random Writer (50GB). 
+%As a data processing system, 
+Spark can work as a server through Spark Job Server. We first run the tasks in the service mode, in which we submit PR and WC simultaneously to the Spark server and run them with a fair scheduler in Spark. As a comparison, we also run PR and WC in the batch mode, in which PR and WC are processed one after the other. We record the execution times and garbage collections times of all tasks under these two modes, which are plotted in Figure~\ref{fig:memorypressure}. We then analyze the memory pressure through the results. 
 
 %Memory is an important resource in current data processing systems, especially in these in-memory computing systems~\cite{shi:mammoth}. Limited memory space will result in memory pressure. The impact of memory pressure can be frequent garbage collection~\cite{lulu:deca} or out of memory error~\cite{fang2015interruptible}, both have serious effect on the data processing system. We can evaluate the memory pressure by PageRank(PR) and WordCount(WC), two common benchmarks, in Spark. The details of clusters and applications are shown in the evaluation. Spark can work for service by Spark Job Server. We firstly run PR and WC individually in batch processing to evaluate the memory pressure themselves, and then evaluate the memory pressure in Spark for service by submitting them together to Spark Job Server. In each stage, we count the medium of execution time and garbage collection time of all tasks, as shown in Figure~\ref{fig:memorypressure}.
 
 \begin{figure}[!t]
 \centering
-\includegraphics[width=0.4\textwidth]{motivation-exec-gc.pdf}
+\includegraphics[width=0.35\textwidth]{motivation-exec-gc.pdf}
 \vspace{-2mm}
 \caption{WC suffers memory pressure from PR}
 \vspace{-6mm}
@@ -42,8 +44,9 @@ Compare with PR, however, WC only contains some simple operations. WC has only t
 
 When multiple jobs, such as PR and WC, are submitted to and run by the Spark 
 service simultaneously, the jobs are run with a fair scheduler provided by Spark. 
-Although WC has much more light memory pressure than PR, all running tasks  
-suffer from the heavy memory pressure produced by PR. We find that the execution time 
+%Although WC has much more light memory pressure than PR, all running tasks  
+%suffer from the heavy memory pressure produced by PR. 
+We find that the execution time 
 (exec-service in Figure~\ref{fig:memorypressure} of every task in each stage of PR has little change.
 %, except some maximum execution times.
 %This is because almost all memory pressure comes from PR and therefore the executions of PR in the service mode and the batch mode show similar trends. 
@@ -53,7 +56,7 @@ light task itself.
 
 %If PR and WC are submitted to Spark service, the submitted jobs will run with fair scheduler (provided by Spark). Although PR suffer memory pressure and WC has light memory pressure, all running tasks must suffer the heavy memory pressure produced by PR. We find that the execution time (exec-service in Figure~\ref{fig:memorypressure}) of each task in each stage has a little change in PR except some maximum values. The reason is that almost all memory pressure is coming form PR, running in Spark for service and batch processing is similar. However, WC must suffer the memory pressure produced by PR. The execution time of WC in the first stage has large fluctuation compared to that in batch processing. And we find that the extended time is almost all come from the memory pressure.
 
-In summary, our results implicate that in a system of the service mode, 1) the heavy memory pressure will result in frequent garbage collection, which consumes most of the time and reduce the throughput; 2) the light tasks suffer from heavy memory pressure produced by the heavy tasks; and 3) the heavy tasks obtain the resources later because these resources are occupied chronically by light tasks, and the heavy tasks themselves are the source of memory pressure.
+In summary, our results implicate that in a system of the service mode, 1) the heavy memory pressure will result in frequent garbage collection, which consumes most of the time and reduce the throughput; 2) the light tasks suffer from heavy memory pressure produced by the heavy tasks; and 3) the heavy tasks obtain the resources later because these resources are occupied chronically by light tasks. %and the heavy tasks themselves are the source of memory pressure.
 
 By observing the first stage of PR and WC, we discover that the tasks of PR and WC invoke different function APIs, which determine the impact of each task on memory pressure. If we can identify and classify these tasks by the characteristics of the function APIs, we can suspend the heavy tasks and leave adequate memory space to the light tasks when the memory pressure show up. This can improve the throughput of the service-mode systems and allow all tasks to run with enough memory space and hence light memory pressure.
 

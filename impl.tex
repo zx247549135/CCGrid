@@ -9,11 +9,17 @@ The sampler updates the following metrics in a task after a record is processed:
 
 \begin{enumerate}
 
-\item Read phase. Only the shuffle buffer in the shuffle read phase results in memory pressure. Thus the sampler updates the metrics in shuffle reader. The updated metrics include the number of processed records, the number of total records, the size of total records and the size of the shuffle buffer.
+\item Read phase. 
+%Only the shuffle buffer in the shuffle read phase results in memory pressure. Thus the sampler updates the metrics in shuffle reader. 
+The updated metrics include the number of processed records, the number of total records, the size of total records and the size of the shuffle buffer.
 
-\item Process phase. During the process phase, only the operation of caching data produces the memory pressure. Thus the sampler updates the metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by the function APIs to unroll the intermediate data in memory. The updated metric is the size of cached data objects unrolled by this task.
+\item Process phase. 
+%During the process phase, only the operation of caching data produces the memory pressure. Thus the sampler updates the metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by the function APIs to unroll the intermediate data in memory. 
+The updated metric is the size of cached data objects unrolled by this task.
 
-\item Write phase. Since only the shuffle buffer in the write phase causes memory pressure, the sampler updates metrics in the shuffle writer. The updated metrics are the size of the shuffle buffer, the number of write records, and the number of total records. 
+\item Write phase. 
+%Since only the shuffle buffer in the write phase causes memory pressure, the sampler updates metrics in the shuffle writer. 
+The updated metrics are the size of the shuffle buffer, the number of write records, and the number of total records. 
 
 \end{enumerate}
 

@@ -268,6 +268,7 @@
 % Default settings for code listings
 
 \newcommand{\tabincell}[2]{\begin{tabular}{@{}#1@{}}#2\end{tabular}}
+%\renewcommand{\baselinestretch}{0.96}
 
 \def\sharedaffiliation{
 \end{tabular}
@@ -386,11 +387,12 @@ Hai Jin\IEEEauthorrefmark{1},
 Song Wu\IEEEauthorrefmark{1}, 
 Zhixiang Ke\IEEEauthorrefmark{1}}
 \IEEEauthorblockA{\IEEEauthorrefmark{1}SCTS/CGCL, School of Computer Science and Technology\\
-Huazhong University of Science and Technology, Wuhan, 430074, China\\
+Huazhong University of Science and Technology, Wuhan, China\\
 Email: \{wxzhang, xhshi, hjin, wusong, zhxke\}@hust.edu.cn}
 \IEEEauthorblockA{\IEEEauthorrefmark{2}University of Warwick, UK\\
 Email: liganghe@dcs.warwick.ac.uk}
 }
+
 
 % conference papers do not typically use \thanks and this command
 % is locked out in conference mode. If really needed, such as for
@@ -608,8 +610,9 @@ memory pressure; memory usage rate; task scheduler; data processing systems for 
 %\end{thebibliography}
 
 \bibliographystyle{IEEEtran}
+{\scriptsize
 \bibliography{ref}
-
+}
 
 % that's all folks
 \end{document}
