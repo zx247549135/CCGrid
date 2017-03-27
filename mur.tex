@@ -75,7 +75,7 @@ Memory usage refers to the memory space used to store the data objects with long
 %We determine the memory usage model of a function API by using the following lemmas.
 
 When the function API does not distinguish the key, and the result data will not be cached in memory, the memory usage model of this function can be defined as \textit{constant} (Line I in Figure~\ref{fig:mur}). If the function API distinguishes the key and aggregates the value, and the key appears randomly in the input dataset, the memory usage model of this function can be defined as \textit{sub-linear} (Line II in Figure~\ref{fig:mur}). 
-Note that the reason why we require that \textit{K} appears randomly is because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers around some neighbouring records, the size of intermediate data will increase linearly. While the function API distinguishes \textit{K}, but it does not aggregate \textit{V}, the memory usage model can be defined as \textit{linear} (Line III in Figure~\ref{fig:mur}). 
+Note that the reason why we require that \textit{K} appears randomly is because the size of intermediate data will increase only when the \textit{K} has appeared. If most \textit{K} gathers around some neighbouring records, the size of intermediate data will increase linearly. While the function API distinguishes \textit{K}, but it does not aggregate \textit{V}, the memory usage model can be defined as \textit{linear} (Line III in Figure~\ref{fig:mur}) (see ~\cite{full} for details).
 
 \begin{figure}[!t]
 \centering
