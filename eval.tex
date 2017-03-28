@@ -98,7 +98,7 @@ We adjust the heap size to show the performance of MURS, while the input dataset
 \includegraphics[width=0.4\textwidth]{cache-total.pdf}
 \vspace{-2mm}
 \caption{The Execution and GC Time of PR and AQ in Server}
-\vspace{-2mm}
+\vspace{-4mm}
 \label{fig:cache-total}
 \end{figure}
 
@@ -109,12 +109,13 @@ Less heap size in each node means more memory pressure in the server. When the h
 \includegraphics[width=0.4\textwidth]{cache-peak.pdf}
 \vspace{-2mm}
 \caption{The peak usage memory of tasks and minimum active tasks}
-\vspace{-4mm}
+%\vspace{-2mm}
 \label{fig:cache-peak}
 \end{figure}
 
 %\subsection{Potential starvation in MURS}
 
+\begin{comment}
 \textbf{Potential Starvation} The mitigation strategy of memory pressure delays the computation of suspended tasks. This may cause the starvation of the suspended tasks. MURS address this issue in the application level. 
 %The settings of the experiment presented in this subsection are the same as those in the previous subsection. 
 When PR and AQ are submitted to the server, t
@@ -132,9 +133,10 @@ he execution time of each application is shown in Figure~\ref{fig:cache-prwc}. T
 
 MURS applies the FIFO algorithm when it resumes the suspended tasks. This avoids the long wait of these tasks. Otherwise, suspending these tasks is going to mitigate the memory pressure not only for the currently running light tasks, but also the heavy tasks running next. In the application level, the transient suspension and light memory pressure are actually the trade-off made by MURS. 
 
+\end{comment}
 %\subsection{Avoiding the spill}
 
-\textbf{Avoiding the spill} MURS sets the alarming threshold to avoid the spill when the memory pressure is heavy in the systems that allow the spill. 
+\textbf{Avoiding the spill.} MURS sets the alarming threshold to avoid the spill when the memory pressure is heavy in the systems that allow the spill. 
 %In the experiments presented in last subsection, we also measure the spilling tasks. MURS estimates the size of the required memory space for each task, and ensures that the running tasks can complete with the remaining memory space. 
 %As the estimation is inaccurate to some extent, we find that fewer tasks will spill in MURS, as
 Table~\ref{table:spill} shows the spill tasks in PR and AQ. There are no the spill tasks in AQ in MURS, while the spill tasks in PR decrease from 32\% to 2.5\%.
