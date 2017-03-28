@@ -4,6 +4,7 @@
 
 We conducted the extensive experiments to evaluate the performance of the methods proposed in this work. In the experiments, we use four nodes as the workers and one node as the master. Each node has two eight-core Xeon-2670 CPUs and 64GB memory. The file system is mounted on a SAS disk, running the RedHat Enterprise Linux 5 (kernel 2.6.18). The JDK version is 1.7.0 for Spark 1.6 and Spark Job Server 0.6.2. We record not only the execution time of each application, but also the detailed runtime situations.
 
+%\begin{comment}
 \begin{table}[!t]
 \small
 \centering
@@ -28,8 +29,12 @@ PR & N & \textit{groupByKey} \& \textit{map} \& \textit{reduceByKey} & Yes \\
 \vspace{-4mm}
 \label{table:app}
 \end{table} 
+%\end{comment}
 
-We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC) and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. We choose these four benchmarks because these applications contain different function APIs, as shown in Table~\ref{table:app}. For Sort and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and WC are 30GB and 50GB, respectively. For Grep and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. We use the heap size to evaluate different memory pressure. The garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to the Spark Job Server together.
+We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC) and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, one of its most important features is that it will cache the data in memory.
+%We choose four applications to evaluate the performance: Scan Query (SQ) and Aggregation Query (AQ) which are exploratory SQL queries in ~\cite{www:benchmark}, Sort and  PageRank(PR) which are typical benchmark applications in Spark. For each query, a semantic-identical hand-written Spark program are used for general cases. PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. Another important features is that each iteration of PR is similar to the Join Query in SQL queries.
+We choose these four benchmarks because these applications contain different function APIs, as shown in Table~\ref{table:app}. 
+For Sort and WC, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and WC are 30GB and 50GB, respectively. For Grep and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. We use the heap size to evaluate different memory pressure. The garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to the Spark Job Server together.
 
 \subsection{Memory pressure without caching}
 
