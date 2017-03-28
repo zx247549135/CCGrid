@@ -13,9 +13,11 @@ Memory pressure essentially describes the usage of heap in managed languages. In
 
 %In the memory management of JVM, the heap space is split to young generation, old generation and other generations. The pinch of young generation leads to \textit{Minor GC}. Minor GC will move the lived data objects from young generation to old generation. The pinch of old generation leads to Full GC. If most long lifetime data objects remain in the old generation, frequent full gc will occur and lead to bad performance. Some garbage collection algorithms are working only in young generation or old generation, and some can works on both generations. In any case, the garbage collection is triggered when the used space of heap get the threshold.
 
-Firstly, the memory pressure occurs when the proportion of the used heap has reached the threshold value. The threshold is set based on the triggering condition of garbage collection. In addition, we set two thresholds in the scheduler of MURS. The first threshold, called the yellow value, is used to indicate the memory pressure. When the percentage of the long living data objects in the heap meets the yellow value, it suggests the frequent full GC will occur. Full GC means that the garbage collector will clean all the heap, which is usually computationally expensive. Another threshold value, called as red value, is used to avoid spilling. The red value represents the level of memory pressure under which the out-of-memory error will occur or suggests that some data will be spilled to the disk. The default yellow and red values are 0.4 and 0.8, respectively, based on our evaluation. When the memory pressure is high, we will reduce the value.
+Firstly, the memory pressure occurs when the proportion of the used heap has reached the threshold value. The threshold is set based on the triggering condition of garbage collection. In addition, we set two thresholds in the scheduler of MURS. The first threshold, called the yellow value, is used to indicate the memory pressure. When the percentage of the long living data objects in the heap meets the yellow value, it suggests the frequent full GC will occur. Full GC means that the garbage collector will clean all the heap, which is usually computationally expensive. Another threshold value, called as red value, is used to avoid spilling. The red value represents the level of memory pressure under which the out-of-memory error will occur or suggests that some data will be spilled to the disk. 
+%The default yellow and red values are 0.4 and 0.8, respectively, based on our evaluation. When the memory pressure is high, we will reduce the value.
 
-With the yellow and red values, an accurate percentage of long living data objects in the heap actually determines the efficiency of the threshold. JVM splits the heap to young generation and old generation. Minor GC cleans the young generation and moves living data objects to the old generation. Thus the percentage of the heap usage after a minor GC represents the living data objects in the heap. After each full GC, dead data objects in old generation will also be reclaimed and then we revise the percentage of long living data objects in the heap according to the current percentage of heap usage.
+With the yellow and red values, an accurate percentage of long living data objects in the heap actually determines the efficiency of the threshold. JVM splits the heap to young generation and old generation. Minor GC cleans the young generation and moves living data objects to the old generation. Thus the percentage of the heap usage after a minor GC represents the living data objects in the heap. 
+%After each full GC, dead data objects in old generation will also be reclaimed and then we revise the percentage of long living data objects in the heap according to the current percentage of heap usage.
 
 %With the yellow value and red value, the percentage of data objects with long lifetime in the heap are actually important. As we know, garbage collection algorithm is based on mark-clean; thus, long-lived data objects in the heap will lead to expensive marking and cleaning costs. What’s more, long-lived data objects directly result in frequent full garbage collection. In order to get the percent of long lifetime data objects in heap, we set it to the size after a minor GC, which just cleans parts of the heap quickly. These data objects are lived in the heap, and most will also be lived along with the tasks.  
 
@@ -38,6 +40,10 @@ get the Memory Usage Sampler $Sampler$\;
 get the Memory Manger $SM$ of System\;
 get the Memory Manger $JM$ of JVM\;
 get the queue including suspended tasks $SQ$\;
+  $freeMemory \leftarrow JM.freeMemory$\;
+  $consum[] \leftarrow SM.tasksMemoryConsumption$\;
+  $rate[] \leftarrow Sampler.getMemoryUsageRate$\;
+  $p[] \leftarrow Sampler.getCompletePercent$\;
 \lIf{Usage of $JM$ is lower than the yellow value}{return}
 \lElseIf{Usage of $JM$ is lower than the red value}{\CS}
 \lElseIf{$SQ$ is not empty}{return}
@@ -45,16 +51,12 @@ get the queue including suspended tasks $SQ$\;
 
 \BlankLine
 \Fn{\CST}{
-  $freeMemory \leftarrow JM.freeMemory$\;
-  $consumption[] \leftarrow SM.tasksMemoryConsumption$\;
-  $rate[] \leftarrow Sampler.getMemoryUsageRate$\;
-  $percent[] \leftarrow Sampler.getCompletePercent$\;
   $S \leftarrow R$\;
   \While{$freeMemory > 0$}{
     $minRateTaskId \leftarrow reate[].min$\;   
-    \lIf{\CS}{reduce the running cores and return}
-    $memoryNecessary \leftarrow comsumption[taskId] * (1-percent[taskId])$\;
-    $freeMemory -= memoryNecessary$ \;
+    %\uIf{\CS}{reduce the running cores and return}
+    $memNecessary \leftarrow comsum[taskId] * (1-p[taskId])$\;
+    $freeMemory -= memNecessary$ \;
     $S$ remove minRateTaskId \;
     push minRateTaskId to $SQ$\;
     $rate[]$ remove minRateTaskId \;
@@ -65,10 +67,10 @@ get the queue including suspended tasks $SQ$\;
 \Fn{\CS}{
   $taskId \leftarrow$ task Id \;
   $totalMemory \leftarrow JM.totalMemory$ \;
-  \lIf{$comsumption[taskId] > totalMemory / R.length$}{\KwRet{True}}
+  \lIf{$comsum[taskId] > totalMemory / R.length$}{\KwRet{True}}
   \Else{
-      $memoryNecessary \leftarrow comsumption[taskId] / percent[taskId]$\;
-      \lIf{$memoryNecessary > totalMemory / R.length$}{\KwRet{True}}
+      $memNecessary \leftarrow comsum[taskId] / p[taskId]$\;
+      \lIf{$memNecessary > totalMemory / R.length$}{\KwRet{True}}
       \lElse{\KwRet{False}}
       }
 }
@@ -79,11 +81,15 @@ get the queue including suspended tasks $SQ$\;
 
 The indicators of memory pressure serve as the basis of the memory usage rate based scheduler. The scheduling strategy is presented in Algorithm~\ref{code:scheduler}. The input of the scheduler is the current running tasks and the output is the proposed suspended tasks. The scheduler records the indicators of memory pressure. A \textit{Sampler} is designed to record the real-time values of the metrics regarding the currently running tasks. The Sampler runs seasonally to update the values of the metrics for each task and compute the current memory usage rate, such as the size of input dataset, the number of processed records, and the size of the results.
 
-If the memory pressure is light or there are already suspended tasks, we return immediately without proposing suspended tasks (lines 4, 6). If the memory pressure has reached the red value, MURS will try to avoid spilling (line 5). When the memory usage of the JVM heap reaches the yellow value, we obtain the memory usage rates of all running tasks from the sampler and other details of current memory usage (lines 9-12). We use the measures to process the currently running tasks in the following order of memory usage model: constant, sub-linear, linear, and super-linear. The available memory is then the free memory subtracting the memory required for the currently running tasks. When the free memory is not enough for running the remaining unprocessed tasks, the scheduler will stop processing tasks (lines 14-20). This method is able to distinguish the tasks that have the sub-linear model but are run as the heavy tasks when processing the larger datasets, or the tasks that have the super-linear model but are run as the light tasks when they consume less memory. The processed tasks are removed and the remaining tasks will be returned. The returned tasks are heavy tasks and will be suspended. In order to avoid potential starvation, the suspended tasks are pushed to a queue (line 21). The FIFO algorithm allows us to resume the first suspended task to avoid starvation. 
+If the memory pressure is light or there are already suspended tasks, we return immediately without proposing suspended tasks (lines 9, 11). If the memory pressure has reached the red value, MURS will try to avoid spilling (line 10). 
+%When the memory usage of the JVM heap reaches the yellow value, we obtain the memory usage rates of all running tasks from the sampler and other details of current memory usage (lines 5-9).
+We use the measures to process the currently running tasks in the following order of memory usage model: constant, sub-linear, linear, and super-linear. The available memory is then the free memory subtracting the memory required for the currently running tasks. When the free memory is not enough for running the remaining unprocessed tasks, the scheduler will stop processing tasks (lines 15-22).
+% This method is able to distinguish the tasks that have the sub-linear model but are run as the heavy tasks when processing the larger datasets, or the tasks that have the super-linear model but are run as the light tasks when they consume less memory. 
+The processed tasks are removed and the remaining tasks will be returned. The returned tasks are heavy tasks and will be suspended. In order to avoid potential starvation, the suspended tasks are pushed to a queue (line 20). The FIFO algorithm allows us to resume the first suspended task to avoid starvation. 
 
 MURS suspends the proposed heavy tasks to prevent memory pressure from increasing at a high rate. Note that if all running tasks are heavy tasks, MURS still schedules the tasks with the same algorithm. It always selects the tasks that have relatively lower memory usage rate out of all tasks. 
 
-Function \textit{ComputeSpill} is designed to avoid spilling. As the running tasks share the JVM heap, the maximum memory space allowed for each task must be less than $M/N$ ($M$ is the memory size and $N$ is the number of running threads). When the actual memory consumption of a task exceeds the maximum space, the spill or out-of-memory error will occur. The running tasks that satisfy the condition of \textit{ComputeSpill} (lines 27, 30) are also suspended to reduce the degree of parallelism in order to acquire adequate memory space after the memory pressure is released.   
+Function \textit{ComputeSpill} is designed to avoid spilling. As the running tasks share the JVM heap, the maximum memory space allowed for each task must be less than $M/N$ ($M$ is the memory size and $N$ is the number of running threads). When the actual memory consumption of a task exceeds the maximum space, the spill or out-of-memory error will occur. The running tasks that satisfy the condition of \textit{ComputeSpill} (lines 28, 31) are also suspended to reduce the degree of parallelism in order to acquire adequate memory space after the memory pressure is released.   
 
 When a running task is completed, we resume the execution of a suspended task popped out of the queue. After the memory pressure recedes, reflected by the phenomenon that the usage of JVM heap decreases to below the yellow value after a full GC, the remaining suspended tasks will also be resumed. Namely, the completion of a running task only causes one suspended task to be resumed while the memory usage below yellow value will cause all suspended tasks to be resumed.
 
