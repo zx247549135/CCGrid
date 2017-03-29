@@ -115,6 +115,7 @@ Less heap size in each node means more memory pressure in the server. When the h
 
 %\subsection{Potential starvation in MURS}
 
+\begin{comment}
 \textbf{Potential Starvation} The mitigation strategy of memory pressure delays the computation of suspended tasks. This may cause the starvation of the suspended tasks. MURS address this issue in the application level. 
 %The settings of the experiment presented in this subsection are the same as those in the previous subsection. 
 When PR and AQ are submitted to the server, t
@@ -131,6 +132,7 @@ he execution time of each application is shown in Figure~\ref{fig:cache-prwc}. T
 \end{figure}
 
 MURS applies the FIFO algorithm when it resumes the suspended tasks. This avoids the long wait of these tasks. Otherwise, suspending these tasks is going to mitigate the memory pressure not only for the currently running light tasks, but also the heavy tasks running next. In the application level, the transient suspension and light memory pressure are actually the trade-off made by MURS. 
+\end{comment}
 
 %\subsection{Avoiding the spill}
 
