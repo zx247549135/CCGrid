@@ -72,7 +72,7 @@ Thus, MURS suspends more tasks in AQ as the heap size in AQ is occupied by the t
 
 When three applications are submitted, out-of-memory (OME) is thrown by the server. Although the live shuffle buffer in this case is smaller than the case with two applications, some other data objects occupy much heap space, such as the recording of living applications, the handler of disk writing, and the global configurations of Spark. Spark provides the spilling capability to overcome the shortage of memory. However, it cannot completely avoid the OME.
 
-MURS mitigates the memory pressure in each application and we find that the performance slows down tardily along with the heap size. The result shows that the cost of garbage collection is stable. As MURS suspends the heavy tasks, the slow increase in execution time due to the increase in computation time.  
+MURS mitigates the memory pressure in each application and we find that the performance decreases slowly as the heap size decreases. The result shows that the cost of garbage collection is stable. As MURS suspends the heavy tasks, the slow increase in execution time is due to the increase in computation time.  
 
 \begin{comment}
 \begin{figure}[!t]
