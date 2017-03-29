@@ -33,7 +33,7 @@ PR & N & \textit{groupByKey} \& \textit{map} \& \textit{reduceByKey} & Yes \\
 
 %We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC) and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, one of its most important features is that it will cache the data in memory.
 We choose four applications to evaluate the performance: Scan Query (SQ) and Aggregation Query (AQ) which are exploratory SQL queries in ~\cite{www:benchmark}, Sort and  PageRank(PR) which are typical benchmark applications in Spark. For each query, a semantic-identical hand-written Spark program are used for general cases. PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. 
-%Another important features is that each iteration of PR is similar to the Join Query in SQL queries.
+Another important features is that each iteration of PR is similar to the Join Query in SQL queries.
 %We choose these four benchmarks because these applications contain different function APIs, as shown in Table~\ref{table:app}. 
 For Sort and AQ, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and AQ are 30GB and 50GB, respectively. For SQ and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. We use the heap size to evaluate different memory pressure. The garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to the Spark Job Server together.
 
@@ -62,7 +62,7 @@ We choose three applications: Sort, AQ, and SQ. These applications do not perfor
 \includegraphics[width=0.23\textwidth]{active-task.pdf}}
 \vspace*{-2mm}
 \caption{Results of memory pressure without caching}
-\vspace*{-4mm}
+\vspace*{-2mm}
 \label{fig:pressurewithoutcache}
 \end{figure*}
 
@@ -99,7 +99,7 @@ We adjust the heap size to show the performance of MURS, while the input dataset
 \includegraphics[width=0.4\textwidth]{cache-total.pdf}
 \vspace{-2mm}
 \caption{The Execution and GC Time of PR and AQ in Server}
-\vspace{-2mm}
+%\vspace{-2mm}
 \label{fig:cache-total}
 \end{figure}
 
@@ -108,9 +108,9 @@ Less heap size in each node means more memory pressure in the server. When the h
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.4\textwidth]{cache-peak.pdf}
-\vspace{-2mm}
-\caption{The peak usage memory of tasks and minimum active tasks}
 %\vspace{-2mm}
+\caption{The peak usage memory of tasks and minimum active tasks}
+\vspace{-2mm}
 \label{fig:cache-peak}
 \end{figure}
 
