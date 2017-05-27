@@ -32,7 +32,7 @@ PR & N & \textit{groupByKey} \& \textit{map} \& \textit{reduceByKey} & Yes \\
 \end{comment}
 
 %We choose four typical benchmark applications in Spark to evaluate the performance: Grep, Sort, WordCount(WC) and PangeRank(PR). Grep has only one stage: it filters the records that do not satisfy the conditions. WC has two stages: it counts the number of each key in the input file. Sort has three stages: it sorts all records by key in the input file. While PR is a typical iterative computations, one of its most important features is that it will cache the data in memory.
-We choose four applications to evaluate the performance: Scan Query (SQ) and Aggregation Query (AQ) which are exploratory SQL queries in ~\cite{www:benchmark}, Sort and  PageRank(PR) which are typical benchmark applications in Spark. For each query, a semantic-identical hand-written Spark program are used for general cases. PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. 
+We choose four applications to evaluate the performance: \textit{Scan Query} (SQ) and \textit{Aggregation Query} (AQ) which are exploratory SQL queries in ~\cite{www:benchmark}, Sort and \textit{PageRank} (PR) which are typical benchmark applications in Spark. For each query, a semantic-identical hand-written Spark program are used for general cases. PR is a typical iterative computations, one of its most important features is that it will cache the data in memory. 
 Another important features is that each iteration of PR is similar to the Join Query in SQL queries.
 %We choose these four benchmarks because these applications contain different function APIs, as shown in Table~\ref{table:app}. 
 For Sort and AQ, the datasets are produced by HiBench Random Writer with 1B unique key numbers. The sizes of the input datasets for Sort and AQ are 30GB and 50GB, respectively. For SQ and PR, we use the real graphs, webbase-2001 (30GB)~\cite{boldi:webgraph}, to evaluate the performance of MURS. The key-value pairs of each record in all input dataset have the similar size. We use the heap size to evaluate different memory pressure. The garbage collection time is used to measure the memory pressure. These applications are grouped to evaluate different scenes and submitted to the Spark Job Server together.
@@ -41,7 +41,7 @@ For Sort and AQ, the datasets are produced by HiBench Random Writer with 1B uniq
 
 Most current data processing systems are designed based on MapReduce. But only a part of them provide the in-memory computing model that caches the data in memory to speed up the system. Thus, we first evaluate these applications without caching the data in memory, which represents the common frameworks that work with the key-value pairs, such as Hadoop and Hive.
 
-We choose three applications: Sort, AQ, and SQ. These applications do not perform the caching operations. Each application has similar implementation in MapReduce. SQ reads the data from the disk and filters these records which satisfy the given conditions. Most data objects are temporary. The shuffle buffers in Sort and AQ contain the data objects with long lifetime. Thus the tasks in Sort and AQ are the light to heavy tasks in MURS. The results of each submission are shown in Figure~\ref{fig:pressurewithoutcache}. The best improvement achieved by MURS is 1.8x to 2.9x compared to Spark in each evaluation. The reduction of the garbage collection contributes most to the improvement.
+We choose three applications: Sort, AQ, and SQ. These applications do not perform the caching operations. Each application has similar implementation in MapReduce. SQ reads the data from the disk and filters these records which satisfy the given conditions. Most data objects are temporary. The shuffle buffers in Sort and AQ contain the data objects with long lifetime. Thus the tasks in Sort and AQ are the light to heavy tasks in MURS. The results of each submission are shown in Figure~\ref{fig:pressurewithoutcache}. The best improvement achieved by MURS is 1.8x to 2.9x compared with Spark in each evaluation. The reduction of the garbage collection contributes most to the improvement.
 
 \begin{figure*}[!t]
 \centering
@@ -62,16 +62,16 @@ We choose three applications: Sort, AQ, and SQ. These applications do not perfor
 \includegraphics[width=0.23\textwidth]{active-task.pdf}}
 \vspace*{-2mm}
 \caption{Results of memory pressure without caching}
-\vspace*{-2mm}
+\vspace*{-4mm}
 \label{fig:pressurewithoutcache}
 \end{figure*}
 
-When two applications are submitted to the server, MURS works better in Sort and SQ. Comparing Sort to AQ, the heavy memory pressure occurs in the different phase. The \textit{sort} operation is implemented in the \textit{read phase} of the tasks. Thus the tasks in the last stage of Sort suffer from the heavy memory pressure during their read phases. However, the \textit{reduce} operation in AQ is realized in the \textit{write phase} of the tasks. The heavy memory pressure is caused by the write phase of the tasks in the first stage. Moreover, massive temporary data objects are produced by the function API \textit{flatMap} before the write phase. They may be currently alive in the heap during the write phase in AQ. 
+When two applications are submitted to the server, MURS works better in Sort and SQ. Comparing Sort with AQ, the heavy memory pressure occurs in the different phase. The \textit{sort} operation is implemented in the \textit{read phase} of the tasks. Thus the tasks in the last stage of Sort suffer from the heavy memory pressure during their read phases. However, the \textit{reduce} operation in AQ is realized in the \textit{write phase} of the tasks. The heavy memory pressure is caused by the write phase of the tasks in the first stage. Moreover, massive temporary data objects are produced by the function API \textit{flatMap} before the write phase. They may be currently alive in the heap during the write phase in AQ. 
 %Although the tasks in Sort belong to the linear memory usage model and the tasks in AQ are sub-linear
 Thus, MURS suspends more tasks in AQ as the heap size in AQ is occupied by the temporary data objects, as shown in Figure~\ref{fig:subfig:activetasks}. These temporary data objects result in frequenter garbage collections. 
 %We can see that suspension in MURS is determined not only by the memory usage models, but also by the current usage of the heap. 
 
-When three applications are submitted, out-of-memory (OME) is thrown by the server. Although the live shuffle buffer in this case is smaller than the case with two applications, some other data objects occupy much heap space, such as the recording of living applications, the handler of disk writing, and the global configurations of Spark. Spark provides the spilling capability to overcome the shortage of memory. However, it cannot completely avoid the OME.
+When three applications are submitted, \textit{out-of-memory} (OME) is thrown by the server. Although the live shuffle buffer in this case is smaller than the case with two applications, some other data objects occupy much heap space, such as the recording of living applications, the handler of disk writing, and the global configurations of Spark. Spark provides the spilling capability to overcome the shortage of memory. However, it cannot completely avoid the OME.
 
 MURS mitigates the memory pressure in each application and we find that the performance decreases slowly as the heap size decreases. The result shows that the cost of garbage collection is stable. As MURS suspends the heavy tasks, the slow increase in execution time is due to the increase in computation time.  
 
@@ -81,7 +81,7 @@ MURS mitigates the memory pressure in each application and we find that the perf
 \includegraphics[width=0.35\textwidth]{active-task.pdf}
 %\vspace{-2mm}
 \caption{The minimum active tasks in each server}
-%\vspace{-4mm}
+\vspace{-4mm}
 \label{fig:active-task}
 \end{figure}
 \end{comment}
@@ -92,25 +92,25 @@ Some frameworks provide the caching mechanism for in-memory computation, such as
 %Tracing these data is expensive. Also, the memory pressure means that there is less accessible memory space for the job execution.
 
 PR and AQ are used as the experimental applications. PR is an iterative application. In the experiments, we run 5 iterations of the application. PR caches the intermediate data in memory after the first iteration. AQ is submitted at the second iteration. 
-We adjust the heap size to show the performance of MURS, while the input dataset is 30GB, as shown in Figure~\ref{fig:cache-total}. When the heap size is less than 17GB, the service-oriented Spark throws the Out-of-Memory error (OME). MURS can provide the service when the heap size is reduced to 15GB. While they are both working, MURS improves the performance by up to 23.4\%, and the memory pressure is reduced by 65.4\%.
+We adjust the heap size to show the performance of MURS, while the input dataset is 30GB, as shown in Figure~\ref{fig:cache-total}. When the heap size is less than 17GB, the service-oriented Spark throws the \textit{Out-of-Memory error} (OME). MURS can provide the service when the heap size is reduced to 15GB. While they are both working, MURS improves the performance by up to 23.4\%, and the memory pressure is reduced by 65.4\%.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.4\textwidth]{cache-total.pdf}
 \vspace{-2mm}
-\caption{The Execution and GC Time of PR and AQ in Server}
-%\vspace{-2mm}
+\caption{The execution and GC Time of PR and AQ in server}
+\vspace{-2mm}
 \label{fig:cache-total}
 \end{figure}
 
-Less heap size in each node means more memory pressure in the server. When the heap is exhausted, tasks will throw the OME. With the caching data in memory, The service-oriented Spark throws the OME as the heap size of each node is 17GB. However, MURS is able to mitigate the heavy memory pressure and still performs well when the heap size of each node is reduced to 15GB. MURS suspends heavy tasks and  thus the remaining light tasks can utilize more memory. Figure~\ref{fig:cache-peak} shows that the peak memory usage of all tasks in MURS is consistently larger than that in Spark. The number of active tasks in MURS is reduced to ensure there is the memory available for the running tasks. In other words, MURS has better scalability than the service-oriented Spark.
+Less heap size in each node means more memory pressure in the server. When the heap is exhausted, tasks will throw the OME. With the caching data in memory, the service-oriented Spark throws the OME as the heap size of each node is 17GB. However, MURS is able to mitigate the heavy memory pressure and still performs well when the heap size of each node is reduced to 15GB. MURS suspends heavy tasks and  thus the remaining light tasks can utilize more memory. Figure~\ref{fig:cache-peak} shows that the peak memory usage of all tasks in MURS is consistently larger than that in Spark. The number of active tasks in MURS is reduced to ensure there is the memory available for the running tasks. In other words, MURS has better scalability than the service-oriented Spark.
 
 \begin{figure}[!t]
 \centering
 \includegraphics[width=0.4\textwidth]{cache-peak.pdf}
-%\vspace{-2mm}
-\caption{The peak usage memory of tasks and minimum active tasks}
 \vspace{-2mm}
+\caption{The peak usage memory of tasks and minimum active tasks}
+\vspace{-4mm}
 \label{fig:cache-peak}
 \end{figure}
 
@@ -140,7 +140,7 @@ MURS applies the FIFO algorithm when it resumes the suspended tasks. This avoids
 \textbf{Avoiding the spill} MURS sets the alarming threshold to avoid the spill when the memory pressure is heavy in the systems that allow the spill. 
 %In the experiments presented in last subsection, we also measure the spilling tasks. MURS estimates the size of the required memory space for each task, and ensures that the running tasks can complete with the remaining memory space. 
 %As the estimation is inaccurate to some extent, we find that fewer tasks will spill in MURS, as
-Table~\ref{table:spill} shows the spill tasks in PR and AQ. There are no the spill tasks in AQ in MURS, while the spill tasks in PR decrease from 32\% to 2.5\%.
+Table~\ref{table:spill} shows the spill tasks in PR and AQ. There are no spill tasks in AQ in MURS, while the spill tasks in PR decrease from 32\% to 2.5\%.
 We notice that the error exists when avoiding the spill. The sampler in MURS counts two important metrics for a task: the percentage of the processed records in the total records, and the currently allocated memory space for this task. We can quickly obtain the required memory space based on these two metrics. When the memory pressure reaches the alarming threshold, we suspend a part of the running tasks and leave enough memory space for the remaining running tasks. As the estimate is based on sampling, the error exists in terms of the estimated size of the allocated memory space, especially when the value in some key-value pairs is a collection. 
 %Different records have different sizes because the number of values inside a collection is different, such as \textit{groupByKey} in PR. Some hot keys may result in a substantial error. 
 Thus, there are even fewer spilling tasks in MURS that the figures reported in the experiments.

@@ -2,7 +2,7 @@
 
 We implement MURS in Spark 1.6.0 with approximately 1000 Scala codes. MURS contains a scheduler and a sampler. The scheduler implements the Algorithm~\ref{code:scheduler}. 
 %The sampler runs seasonally to update the metrics related to the current running tasks: Spark memory manger and JVM heap manager. Each executor launches one scheduler and one sampler in Spark.
-The sampler works seasonally to collect and compute all metrics in the scheduler. 
+The sampler works cyclically to collect and compute all metrics in the scheduler. 
 %It is implemented in the original task scheduler because all tasks in Spark are accessible in the scheduler. 
 The sampler updates the following metrics in a task after a record is processed:
 
@@ -10,7 +10,7 @@ The sampler updates the following metrics in a task after a record is processed:
 
 \item Read phase. 
 %Only the shuffle buffer in the shuffle read phase results in memory pressure. Thus the sampler updates the metrics in shuffle reader. 
-The updated metrics include the number of processed records, the number of total records, the size of total records and the size of the shuffle buffer.
+The updated metrics include the number of processed records, the number of total records, the size of total records, and the size of the shuffle buffer.
 
 \item Process phase. 
 %During the process phase, only the operation of caching data produces the memory pressure. Thus the sampler updates the metrics in {\ttfamily \small CacheManager}. {\ttfamily \small CacheManager} is invoked by the function APIs to unroll the intermediate data in memory. 
